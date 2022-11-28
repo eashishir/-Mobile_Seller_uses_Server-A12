@@ -26,14 +26,18 @@ async function run() {
     try {
       const categoriesCollection = client.db('myAssignment12').collection('categotires');
       const productsCollection = client.db('myAssignment12').collection('products');
+      const bookingCollection = client.db('myAssignment12').collection('booking');
+      const usersCollection = client.db('myAssignment12').collection('users');
       
-
+  // firs get category only loaded
 
       app.get('/categories', async(req,res) => {
         const query = {};
         const category = await categoriesCollection.find(query).toArray();
         res.send(category)
       });
+
+  // second get categories products are loaded
 
       app.get('/products/:id', async (req, res) => {
 
@@ -43,7 +47,29 @@ async function run() {
         res.send(product)
   
       });
+// third is post bookings products data
 
+     app.get('/bookings', async(req, res) => {
+      const email = req.query.email;
+      const query = {email: email}
+      const bookings= await bookingCollection.find(query).toArray();
+      res.send(bookings);
+     })
+
+      app.post('/bookings', async(req,res) => {
+        const booking = req.body
+        console.log(booking)
+        const result = await bookingCollection.insertOne(booking);
+        res.send(result);
+      });
+
+  //  fourth is users post and save server
+
+  app.post('/users', async(req,res) => {
+    const user = req.body
+    const result = await usersCollection.insertOne(user);
+    res.send(result);
+  })
       
     }
     finally {
