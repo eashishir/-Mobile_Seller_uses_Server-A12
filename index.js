@@ -1,6 +1,6 @@
 const express = require('express')
 const cors = require('cors')
-const { MongoClient, ServerApiVersion } = require('mongodb');
+const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 
 const jwt  = require('jsonwebtoken')
 require('dotenv').config();
@@ -41,6 +41,20 @@ async function run() {
       const productsCollection = client.db('myAssignment12').collection('products');
       const bookingCollection = client.db('myAssignment12').collection('booking');
       const usersCollection = client.db('myAssignment12').collection('users');
+      const addProductsCollection = client.db('myAssignment12').collection('addProducts');
+
+// make sure you use verify the admin after in verify jwt
+      const verifyAdmin = async (req, res, next) => {
+        const decodedEmail = req.decoded.email;
+        const query = {email: decodedEmail};
+        const user = await usersCollection.findOne(query);
+    
+        if(user?.role !== 'admin'){
+          return res.status(403).send({message: 'forbidden access'})
+        }
+        next();
+
+      }
       
   // firs get category only loaded
 
@@ -103,10 +117,31 @@ async function run() {
   });
 
 
+
   app.get('/users', async(req , res) => {
     const query = {};
     const users = await usersCollection.find(query).toArray();
     res.send(users)
+  });
+
+  // isSeller check
+
+  app.get('/users/seller/:email', async(req,res) => {
+    const email = req.params.email;
+    const query = { email }
+    const user = await usersCollection.findOne(query);
+    res.send({ isSeller: user?.account === 'Seller' })
+})
+ 
+
+     
+
+// isAdmin?check
+  app.get('/users/admin/:email', async(req,res) => {
+      const email = req.params.email;
+      const query = { email }
+      const user = await usersCollection.findOne(query);
+      res.send({ isAdmin: user?.role === 'admin' })
   })
 
   app.post('/users', async(req,res) => {
@@ -115,7 +150,41 @@ async function run() {
     res.send(result);
   });
 
-  
+  app.put('/users/admin/:id', verifyJWT, verifyAdmin, async(req, res) => {
+   const id = req.params.id;
+    const filter = {_id: ObjectId(id) }
+    const options = {upsert : true };
+    const updatedDoc = {
+      $set: {
+        role: 'admin'
+      }
+    }
+    const result = await usersCollection.updateOne(filter, updatedDoc, options);
+    res.send(result);
+  });
+
+
+
+  // add products selelrs
+
+  app.get('/addProducts', verifyJWT, verifyAdmin, async(req, res) => {
+    const query = {}
+    const addproducts = await addProductsCollection.find(query).toArray();
+    res.send(addproducts);
+  })
+
+  app.post('/addProducts' , verifyJWT, verifyAdmin, async(req, res) => {
+    const addProduct = req.body
+    const result = await addProductsCollection.insertOne(addProduct);
+    res.send(result);
+  });
+
+  app.delete('/addProducts/:id', verifyJWT,verifyAdmin, async(req, res) => {
+    const id = req.params.id;
+    const filter = { _id: ObjectId(id) };
+    const result = await addProductsCollection.deleteOne(filter);
+    res.send(result);
+  })
       
     }
     finally {
