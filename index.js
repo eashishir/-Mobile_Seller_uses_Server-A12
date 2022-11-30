@@ -171,7 +171,8 @@ app.post('/create-payment-intent', async (req, res) => {
 
      
 
-// isAdmin?check
+// isAdmin?check 
+
   app.get('/users/admin/:email', async(req,res) => {
       const email = req.params.email;
       const query = { email }
@@ -200,7 +201,7 @@ app.post('/create-payment-intent', async (req, res) => {
 
 
 
-  // add products selelrs
+  // add products selelrs to the client
 
   app.get('/addProducts', verifyJWT, verifyAdmin, async(req, res) => {
     const query = {}
